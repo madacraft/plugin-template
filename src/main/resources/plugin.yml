@@ -1,0 +1,7 @@
+main: 'org.madacraft.template.Template'
+name: 'template-plugin'
+version: '1.0-SNAPSHOT'
+description: 'Template Plugin'
+commands:
+
+
