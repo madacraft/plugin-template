@@ -43,6 +43,11 @@ tasks.register("buildAndCopy") {
             include "*.jar"
         }
     }
+    doLast {
+        delete {
+            delete layout.projectDirectory.file("build")
+        }
+    }
 }
 
 def targetJavaVersion = 21
