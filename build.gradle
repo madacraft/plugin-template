@@ -1,7 +1,25 @@
+import org.hidetake.groovy.ssh.core.Remote
+
+buildscript {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        maven {
+            name = "spigotmc-repo"
+            url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+        }
+    }
+    dependencies {
+        classpath "com.gradleup.shadow:shadow-gradle-plugin:9.3.1"
+    }
+}
+
 plugins {
     id 'java'
     id("xyz.jpenilla.run-paper") version "2.3.1"
     id 'org.jetbrains.kotlin.jvm'
+    id 'com.gradleup.shadow' version '9.3.1'
+    id 'org.hidetake.ssh' version '2.12.0'
 }
 
 group = 'org.madacraft'
@@ -19,6 +37,10 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.8-R0.1-SNAPSHOT")
     implementation('org.apache.logging.log4j:log4j-core:2.25.3')
     implementation("org.apache.logging.log4j:log4j-api:2.25.2")
+    implementation("com.mysql:mysql-connector-j:9.5.0")
+    implementation("com.j256.ormlite:ormlite-jdbc:6.1")
+    compileOnly("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.42")
 }
 
 tasks {
@@ -32,7 +54,7 @@ tasks {
 
 tasks.register("buildAndCopy") {
     group "minecraft"
-    dependsOn "jar"
+    dependsOn "shadowJar"
     delete {
         delete layout.projectDirectory.file(".volumes/minecraft/data/plugins/${rootProject.name}-${version}.jar")
     }
@@ -44,8 +66,34 @@ tasks.register("buildAndCopy") {
         }
     }
     doLast {
+        dependsOn("clean")
         delete {
             delete layout.projectDirectory.file("build")
+        }
+    }
+}
+
+def sshPropertiesFile = rootProject.file('ssh.properties')
+def sshProperties = new Properties()
+sshProperties.load(new FileInputStream(sshPropertiesFile))
+
+remotes {
+    preprod {
+        host = sshProperties.get('host') as String
+        user = sshProperties.get("user") as String
+        password = sshProperties.get('password') as String
+    }
+}
+
+
+tasks.register("deploy") {
+    group "minecraft"
+    dependsOn "shadowJar"
+    doFirst {
+        ssh.run {
+            session(remotes.preprod) {
+                put from: "${rootProject.rootDir}/build/libs/${rootProject.name}-${version}-all.jar", into: sshProperties.get('target.directory')
+            }
         }
     }
 }

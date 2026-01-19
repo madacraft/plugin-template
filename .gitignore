@@ -3,3 +3,4 @@
 .volumes
 build
 bin
+ssh.properties

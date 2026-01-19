@@ -1,7 +1,7 @@
 services:
   server:
     image: 'itzg/minecraft-server:java21-graalvm'
-    container_name: 'mc-dev-server'
+    container_name: 'marketplace-dev-server'
     volumes:
       - './.volumes/minecraft/data:/data'
     environment:
@@ -12,3 +12,12 @@ services:
       TYPE: 'SPIGOT'
     ports:
       - '8000:8000'
+  database:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: madacraft
+    volumes:
+      - './.volumes/mysql:/var/lib/mysql'
+    ports:
+      - '3306:3306'
